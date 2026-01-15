@@ -5,17 +5,20 @@ require "../config/koneksi.php";
 $keyword = $_GET['search'] ?? "";
 
 if ($keyword) {
-    $stmt = $con->prepare("
+
+    $ambil_berita = $con->prepare("
         SELECT b.*, k.nama_kategori
         FROM berita b
         JOIN kategori k ON b.id_kategori = k.id_kategori
         WHERE b.judul LIKE ?
         ORDER BY b.tanggal DESC
     ");
+
     $like = "%$keyword%";
-    $stmt->bind_param("s", $like);
+    $ambil_berita->bind_param("s", $like);
 } else {
-    $stmt = $con->prepare("
+
+    $ambil_berita = $con->prepare("
         SELECT b.*, k.nama_kategori
         FROM berita b
         JOIN kategori k ON b.id_kategori = k.id_kategori
@@ -23,8 +26,8 @@ if ($keyword) {
     ");
 }
 
-$stmt->execute();
-$result = $stmt->get_result();
+$ambil_berita->execute();
+$result = $ambil_berita->get_result();
 
 $popular = $con->query("
     SELECT id_berita, judul, views

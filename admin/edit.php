@@ -15,25 +15,24 @@ if (!isset($_GET['id'])) {
 $id_berita = intval($_GET['id']);
 $error = "";
 
-$stmt = $con->prepare("
+$ambil_lama = $con->prepare("
     SELECT b.*, k.nama_kategori 
     FROM berita b 
     JOIN kategori k ON b.id_kategori = k.id_kategori
     WHERE b.id_berita = ?
 ");
 
-$stmt->bind_param("i", $id_berita);
-$stmt->execute();
-$result = $stmt->get_result();
+$ambil_lama->bind_param("i", $id_berita);
+$ambil_lama->execute();
+$hasil_lama = $ambil_lama->get_result();
 
-if ($result->num_rows === 0) {
+if ($hasil_lama->num_rows === 0) {
     header("Location: dashboardAdmin.php");
     exit;
 }
 
-$berita = $result->fetch_assoc();
+$berita = $hasil_lama->fetch_assoc();
 
-/* SUBMIT UPDATE */
 if (isset($_POST['update'])) {
 
     $judul = trim($_POST['judul']);
@@ -48,41 +47,36 @@ if (isset($_POST['update'])) {
         $error = "Kategori wajib diisi";
     } else {
 
-        /* CEK / INSERT KATEGORI */
-        $stmt = $con->prepare("SELECT id_kategori FROM kategori WHERE nama_kategori = ?");
-        $stmt->bind_param("s", $kategori_input);
-        $stmt->execute();
-        $res = $stmt->get_result();
+        $cek_kat = $con->prepare("SELECT id_kategori FROM kategori WHERE nama_kategori = ?");
+        $cek_kat->bind_param("s", $kategori_input);
+        $cek_kat->execute();
+        $res_kat = $cek_kat->get_result();
 
-        if ($res->num_rows > 0) {
-            $row = $res->fetch_assoc();
-            $id_kategori = $row['id_kategori'];
+        if ($res_kat->num_rows > 0) {
+            $row_kat = $res_kat->fetch_assoc();
+            $id_kategori = $row_kat['id_kategori'];
         } else {
-            $stmt = $con->prepare("INSERT INTO kategori (nama_kategori) VALUES (?)");
-            $stmt->bind_param("s", $kategori_input);
-            $stmt->execute();
-            $id_kategori = $stmt->insert_id;
+            $tambah_kat = $con->prepare("INSERT INTO kategori (nama_kategori) VALUES (?)");
+            $tambah_kat->bind_param("s", $kategori_input);
+            $tambah_kat->execute();
+            $id_kategori = $tambah_kat->insert_id;
         }
 
-        /* HANDLE GAMBAR */
-        $namaGambar = $berita['gambar'];
+        $namaGambar = $berita['gambar']; 
 
         if (!empty($_FILES['gambar']['name'])) {
-
             $ext = strtolower(pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION));
             $allowed = ['jpg','jpeg','png'];
 
             if (!in_array($ext, $allowed)) {
                 $error = "Format gambar harus JPG / PNG";
             } else {
-
                 $namaGambar = time() . "_" . $_FILES['gambar']['name'];
                 move_uploaded_file(
                     $_FILES['gambar']['tmp_name'],
                     "../assets/img/" . $namaGambar
                 );
 
-                // hapus gambar lama
                 if (file_exists("../assets/img/" . $berita['gambar'])) {
                     unlink("../assets/img/" . $berita['gambar']);
                 }
@@ -90,13 +84,12 @@ if (isset($_POST['update'])) {
         }
 
         if ($error === "") {
-
-            $stmt = $con->prepare("
+            $eksekusi_update = $con->prepare("
                 UPDATE berita 
                 SET judul=?, isi=?, id_kategori=?, gambar=?
                 WHERE id_berita=?
             ");
-            $stmt->bind_param(
+            $eksekusi_update->bind_param(
                 "ssisi",
                 $judul,
                 $isi,
@@ -104,7 +97,7 @@ if (isset($_POST['update'])) {
                 $namaGambar,
                 $id_berita
             );
-            $stmt->execute();
+            $eksekusi_update->execute();
 
             header("Location: dashboardAdmin.php");
             exit;

@@ -9,8 +9,7 @@ if (!isset($_GET['id'])) {
 
 $id = intval($_GET['id']);
 
-
-$stmt = $con->prepare("
+$query_berita = $con->prepare("
     SELECT 
         berita.*, 
         kategori.nama_kategori,
@@ -20,9 +19,10 @@ $stmt = $con->prepare("
     JOIN users ON berita.id_user = users.id
     WHERE berita.id_berita = ?
 ");
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$result = $stmt->get_result();
+
+$query_berita->bind_param("i", $id);
+$query_berita->execute();
+$result = $query_berita->get_result();
 
 if ($result->num_rows === 0) {
     echo "Berita tidak ditemukan";
@@ -99,7 +99,7 @@ body {
         <div class="meta mb-4">
           Oleh <strong><?= htmlspecialchars($berita['username']); ?></strong> ·
           <?= date("d M Y", strtotime($berita['tanggal'])); ?> ·
-          👁 <?= $berita['views']; ?> views
+           <?= $berita['views']; ?> views
         </div>
 
         <div class="content fs-6">

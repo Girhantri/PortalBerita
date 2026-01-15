@@ -14,36 +14,37 @@ if (isset($_POST['simpan'])) {
     $judul   = trim(htmlspecialchars($_POST['judul']));
     $isi     = trim(htmlspecialchars($_POST['isi']));
     $kategori_input = trim(htmlspecialchars($_POST['kategori']));
+    
     if (!isset($_SESSION['id_user'])) {
         die("SESSION id_user tidak ada. Login ulang.");
     }
+    
     $id_user = (int) $_SESSION['id_user'];
     $tanggal = date('Y-m-d H:i:s');
 
- 
     if ($judul == "") {
         $error = "Judul wajib diisi";
-    } elseif (strlen($isi) < 50) {
-        $error = "Isi berita minimal 50 karakter";
+    } elseif (strlen($isi) < 20) {
+        $error = "Isi berita minimal 20 karakter";
     } elseif ($kategori_input == "") {
         $error = "Kategori wajib diisi";
     } elseif ($_FILES['gambar']['name'] == "") {
         $error = "Gambar wajib diupload";
     } else {
+        $cek_kat = $con->prepare("SELECT id_kategori FROM kategori WHERE nama_kategori = ?");
+        $cek_kat->bind_param("s", $kategori_input);
+        $cek_kat->execute();
+        $hasil_kat = $cek_kat->get_result();
 
-        $stmt = $con->prepare("SELECT id_kategori FROM kategori WHERE nama_kategori = ?");
-        $stmt->bind_param("s", $kategori_input);
-        $stmt->execute();
-        $res = $stmt->get_result();
-
-        if ($res->num_rows > 0) {
-            $row = $res->fetch_assoc();
-            $id_kategori = $row['id_kategori'];
+        if ($hasil_kat->num_rows > 0) {
+            $data_kat = $hasil_kat->fetch_assoc();
+            $id_kategori = $data_kat['id_kategori'];
         } else {
-            $stmt = $con->prepare("INSERT INTO kategori (nama_kategori) VALUES (?)");
-            $stmt->bind_param("s", $kategori_input);
-            $stmt->execute();
-            $id_kategori = $stmt->insert_id;
+ 
+            $tambah_kat = $con->prepare("INSERT INTO kategori (nama_kategori) VALUES (?)");
+            $tambah_kat->bind_param("s", $kategori_input);
+            $tambah_kat->execute();
+            $id_kategori = $tambah_kat->insert_id;
         }
 
         $ext = strtolower(pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION));
@@ -52,22 +53,16 @@ if (isset($_POST['simpan'])) {
         if (!in_array($ext, $allowed)) {
             $error = "Format gambar harus JPG / PNG";
         } else {
-
             $namaGambar = time() . "_" . $_FILES['gambar']['name'];
             move_uploaded_file(
                 $_FILES['gambar']['tmp_name'],
                 "../assets/img/" . $namaGambar
             );
 
-          $sql = ("
-                INSERT INTO berita
-                (judul, isi, id_kategori, tanggal, gambar, views, id_user)
-                VALUES (?, ?, ?, ?, ?, 0, ?)
-            ");
+            $sql = "INSERT INTO berita (judul, isi, id_kategori, tanggal, gambar, views, id_user) VALUES (?, ?, ?, ?, ?, 0, ?)";
 
-
-            $stmt = $con->prepare($sql);
-            $stmt->bind_param(
+            $buat_berita = $con->prepare($sql);
+            $buat_berita->bind_param(
                 "ssissi",
                 $judul,        
                 $isi,          
@@ -77,7 +72,7 @@ if (isset($_POST['simpan'])) {
                 $id_user       
             );
 
-$stmt->execute();
+            $buat_berita->execute();
             header("Location: dashboardAdmin.php");
             exit;
         }
@@ -148,7 +143,7 @@ body {
 
             <div class="mb-3">
               <label class="form-label">Isi Berita</label>
-              <textarea name="isi" rows="5" class="form-control" placeholder="Minimal 50 karakter"></textarea>
+              <textarea name="isi" rows="5" class="form-control" placeholder="Minimal 20 karakter"></textarea>
             </div>
 
             <div class="mb-3">

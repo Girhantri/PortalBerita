@@ -170,16 +170,22 @@ body {
               <?= date('d M Y', strtotime($row['tanggal'])); ?>
             </td>
            <td class="text-end">
-                <a href="edit.php?id=<?= $row['id_berita']; ?>"
-                    class="btn btn-sm btn-edit">
-                    <i class="bi bi-pencil"></i>
-                </a>
-                <a href="#" 
+              <a href="preview.php?id=<?= $row['id_berita']; ?>" 
+                class="btn btn-sm btn-info text-white me-1">
+                  <i class="bi bi-eye"></i>
+              </a>
+              
+              <a href="edit.php?id=<?= $row['id_berita']; ?>"
+                class="btn btn-sm btn-edit me-1">
+                  <i class="bi bi-pencil"></i>
+              </a>
+              
+              <a href="#" 
                 class="btn btn-sm btn-delete"
                 onclick="confirmDelete(<?= $row['id_berita']; ?>)">
-                <i class="bi bi-trash"></i>
-                </a>
-            </td>
+                  <i class="bi bi-trash"></i>
+              </a>
+      </td>
           </tr>
           <?php endwhile; ?>
         <?php else: ?>
